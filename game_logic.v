@@ -24,6 +24,7 @@ module hit_detector(
     always@(posedge clk) begin
       if(reset_b == 1'b0)
         hit <= 0;
+        cur_s <= CLICK_WAIT;
       else if(cur_s == CLICK) begin
         //logic to send the correct output signal to "hit", based on position of keys relative to hit marker
         cur_s <= next_s;
