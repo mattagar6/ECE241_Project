@@ -13,7 +13,7 @@ module hit_detector(
     input clk, 
     input reset_b, 
     input go, 
-	input [2:0] stream, // bit stream for bongo => 1 indicates a button the user has to press
+    input [2:0] stream, // bit stream for bongo => 1 indicates a button the user has to press
     output reg hit // signal to animation modules if the user has successfully hit the bongo
 	);
 
@@ -21,13 +21,13 @@ module hit_detector(
    reg [3:0] cur_s, next_s;
    
    always@(*)
-    begin: state_table
-      case(cur_s)
-        CLICK_WAIT:
-          next_s = go ? CLICK : CLICK_WAIT;
-        CLICK:
-          next_s = go ? CLICK : CLICK_WAIT;
-      endcase
+   	begin: state_table
+      		case(cur_s)
+        		CLICK_WAIT:
+        			next_s = go ? CLICK : CLICK_WAIT;
+        		CLICK:
+          			next_s = go ? CLICK : CLICK_WAIT;
+      		endcase
     end
     
     always@(posedge clk) begin
