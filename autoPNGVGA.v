@@ -15,7 +15,7 @@ output	[7:0]	VGA_B;
 
 output [9:0]LEDR;
 
-reg [15:0] address;
+reg [16:0] address;
 wire [11:0] data;
 reg [11:0] colour;
 reg  [8:0]x;
@@ -28,7 +28,7 @@ reg  [8:0]xoffsetset;
 reg  [7:0]yoffsetset;
 reg  [3:0] todraw, DrawState;
 reg  donedraw, next, startdraw;
-wire  [3:0] w;
+wire  [7:0] w;
 
 
 //gradient 8bit
@@ -54,13 +54,13 @@ localparam BG = 4'b0001 , BGwait = 4'b0010 , Draw1 = 4'b0011 , Draw1wait = 4'b01
 localparam Background = 4'b0001, Iteam1 = 4'b0010 ;
 
 initial begin
-address <= 16'b0000000000000000;
-x<=9'd0;
-y<=8'd0;
-DrawState <= Draw1;
+address <= 17'd0;
+DrawState <= Draw3;
 donedraw <=0;
 next <= 0;
 startdraw <= 0;
+x=0;
+y=0;
 end
 
 reg setdraw;
@@ -95,8 +95,8 @@ begin
 setdraw <= 1;
 todraw = Iteam1;
 startdraw <= 0;
-xoffsetset <= 9'd16;
-yoffsetset <= 8'd16;
+xoffsetset <= 9'd66;
+yoffsetset <= 8'd6;
 if(next == 1)
 DrawState <= Draw1wait;
 end
@@ -116,8 +116,8 @@ begin
 setdraw <= 1;
 todraw = Iteam1;
 startdraw <= 0;
-xoffsetset <= 9'd32;
-yoffsetset <= 8'd32;
+xoffsetset <= 9'd120;
+yoffsetset <= 8'd56;
 if(next == 1)
 DrawState <= Draw2wait;
 end
@@ -137,8 +137,8 @@ begin
 setdraw <= 1;
 todraw = Iteam1;
 startdraw <= 0;
-xoffsetset <= 9'd64;
-yoffsetset <= 8'd64;
+xoffsetset <= 9'd30;
+yoffsetset <= 8'd84;
 if(next == 1)
 DrawState <= Draw3wait;
 end
@@ -158,7 +158,7 @@ begin
 setdraw <= 1;
 todraw = Iteam1;
 startdraw <= 0;
-xoffsetset <= 0;
+xoffsetset <= 9'd0;
 yoffsetset <= 8'd64;
 if(next == 1)
 DrawState <= Draw4wait;
@@ -179,8 +179,8 @@ begin
 setdraw <= 1;
 todraw = Iteam1;
 startdraw <= 0;
-xoffsetset <= 9'd64;
-yoffsetset <= 0;
+xoffsetset <= 9'd256;
+yoffsetset <= 8'd100;
 if(next == 1)
 DrawState <= Draw5wait;
 end
@@ -190,7 +190,7 @@ Draw5wait:
 begin
 setdraw <= 0;
 startdraw <= 1;
-if(donedraw == 1);
+if(donedraw == 1)
 DrawState <= Justwait;
 end
 
@@ -200,12 +200,17 @@ startdraw <= 0;
 endcase
 end
 
+or (w[2],setdraw, next);
+and(w[1],w[2],CLOCK_50);
 
-
-always@(setdraw)
+always@(posedge w[1])
 begin: drawsetter
 
+
+if(setdraw == 0)
 next <= 0;
+else
+begin
 
 case(todraw)
 
@@ -224,8 +229,8 @@ Iteam1:
 begin
 xoffset <= xoffsetset;
 yoffset <= yoffsetset;
-xmax <= 9'd15 + xoffset ;
-ymax <= 8'd15 + yoffset;
+xmax <= 9'd8 + xoffset ;
+ymax <= 8'd8 + yoffset;
 next <= 1;
 end
 
@@ -233,14 +238,22 @@ end
 
 endcase
 end
+end
 
-and(w[0],startdraw,CLOCK_50);
+
+or (w[3],startdraw,donedraw);
+and(w[0],w[3],CLOCK_50);
 
 
 
 
 always@(posedge w[0])
 begin: imagesetter
+if(startdraw == 0)
+donedraw <= 0;
+else
+begin
+
 address <= 0;
 donedraw <= 0;
 
@@ -248,11 +261,16 @@ case(x)
 xmax: begin
 
 if (y == ymax)
+begin
 donedraw <= 1;
+address <= 0;
+end
 else
+begin
 x<= xoffset;
 y<=y+1;
 address <= address +1;
+end
 end
 
 default:
@@ -261,14 +279,19 @@ if(address == 0)
 begin
 x <= xoffset;
 y <= yoffset;
+address <= address +1;
 end
-
+else
+begin
 address <= address +1;
 x <= x+1;
-y <= y;
+y <= y+0;
+end
+
 
 end
 endcase
+end
 end
 
 
@@ -276,13 +299,11 @@ end
 always@(*)
 begin: dataset
 
-
-
 case(todraw)
 
 Background:
 begin
-colour <= 12'b111111111111;
+colour <= 12'b100010000100;
 end
 
 Iteam1:
@@ -295,15 +316,9 @@ endcase
 
 end
 
-// donedraw, DrawState, todraw, next, startdraw
 
-assign LEDR[0] = donedraw;
-assign LEDR[1] = DrawState;
-assign LEDR[2] = todraw;
-assign LEDR[3] = next;
-assign LEDR[4] = startdraw;
 
-assign LEDR[9:6] = DrawState;
+
 
 
 vga_adapter VGA0 (.resetn(KEY[0]),.clock(CLOCK_50),.colour(colour),.x(x),.y(y),.plot(KEY[2]),.VGA_R(VGA_R),.VGA_G(VGA_G),.VGA_B(VGA_B),.VGA_HS(VGA_HS),.VGA_VS(VGA_VS),.VGA_BLANK(VGA_BLANK_N),.VGA_SYNC(VGA_SYNC_N),	.VGA_CLK(VGA_CLK));
