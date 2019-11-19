@@ -39,7 +39,7 @@ module topControl(
 			delayCnt <= delayCnt - 1;
 	end
 	
-	autoPNGVG u0(
+	Graphics u0(
 					.CLOCK_50(CLOCK_50),
 					.xoffsetset(xoffsetset),
 					.yoffsetset(yoffsetset),
@@ -57,7 +57,7 @@ module topControl(
 		
 endmodule
 
-module autoPNGVG( 
+module Graphics( 
 		input CLOCK_50,
 		input [8:0] xoffsetset,
 		input [7:0] yoffsetset,
