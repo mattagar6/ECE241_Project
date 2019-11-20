@@ -5,7 +5,7 @@
 	1 for the left bongo, 1 for the right bongo
 	
 	connect "go" to whatever detects a button press by the user
-	connect "stream" to whatever shift register is playing the song
+	connect "stream" to register holding x position of target
 	"hit" is the output signal to animation modules to identify a successful hit
 
 */
@@ -13,11 +13,11 @@ module hit_detector(
     input clk, 
     input reset_b, 
     input go, 
-    input [2:0] stream, // bit stream for bongo => 1 indicates a button the user has to press
+    input [8:0] stream, // x position of target to hit
     output reg hit // signal to animation modules if the user has successfully hit the bongo
 	);
 
-   localparam CLICK_WAIT = 0, CLICK = 1;
+   localparam CLICK_WAIT = 0, CLICK = 1, EPS = 10;
    reg [3:0] cur_s, next_s;
    
    always@(*)
@@ -37,8 +37,8 @@ module hit_detector(
 		else if(cur_s == CLICK) begin
 			//logic to send the correct output signal to "hit", based on position of keys relative to hit marker
 			
-			// if at least 1 bit of the bitstream is set, close enough to be considered a hit
-			if(stream != 0)
+			// if press is within epsilon (EPS) pixels, close enough to be considered a hit
+			if(stream < EPS)
 				hit = 1;
 			
 			cur_s <= next_s;
