@@ -2,6 +2,7 @@
 module topControl(
 		input CLOCK_50,
 		input [3:0] KEY, 
+		input [9:0] SW,
 		output [9:0] LEDR, 
 		output VGA_CLK, 
 		output VGA_HS,
@@ -21,18 +22,19 @@ module topControl(
 	reg [23:0] delayCnt;
 	
 	initial begin
-		xoffsetset <= 9'b010000000;
-		yoffsetset <= 8'd56;
+		xoffsetset <= 9'd160;
+		yoffsetset <= 8'd120;
 		delayCnt <= DELAY;
 	end
 	
 	// move the sprite from right to left
 	always@(posedge CLOCK_50) begin
+		yoffsetset <= 8'd120;
 		if(delayCnt == 0) begin
 			if(xoffsetset == 0)
-				xoffsetset <= 9'b010000000;
+				xoffsetset <= 9'd160;
 			else
-				xoffsetset <= xoffsetset - 1;	
+				xoffsetset <= xoffsetset - 1;
 			delayCnt <= DELAY;
 		end
 		else
@@ -43,7 +45,7 @@ module topControl(
 					.CLOCK_50(CLOCK_50),
 					.xoffsetset(xoffsetset),
 					.yoffsetset(yoffsetset),
-					.KEY(KEY),
+					.KEY(KEY[2:0]),
 					.VGA_CLK(VGA_CLK),
 					.VGA_HS(VGA_HS),
 					.VGA_VS(VGA_VS),
@@ -52,6 +54,14 @@ module topControl(
 					.VGA_R(VGA_R),
 					.VGA_B(VGA_B),
 					.VGA_G(VGA_G)
+					);
+					
+	hit_detector u1(
+					.clk(CLOCK_50),
+					.reset_b(~SW[0]), // dummy switch
+					.go(~KEY[3]),
+					.stream(xoffsetset),
+					.hit(LEDR[0])
 					);
 		
 		
@@ -161,7 +171,7 @@ always@(posedge CLOCK_50)
 			Justwait: begin
 				startdraw <= 0;
 				if(waitfor)
-				DrawState <= BG;
+					DrawState <= BG;
 			end
 			
 
@@ -189,7 +199,7 @@ always@(posedge w[1])
 				Item1: begin
 					xoffset = xoffsetset;
 					yoffset = yoffsetset;
-					xmax = 9'd15 + xoffset ;
+					xmax = 9'd15 + xoffset;
 					ymax = 8'd15 + yoffset;
 					next = 1;
 				end
@@ -261,4 +271,3 @@ defparam VGA0.BITS_PER_COLOUR_CHANNEL = 4;
 defparam VGA0.BACKGROUND_IMAGE = "black.mif";
 
 endmodule
-
