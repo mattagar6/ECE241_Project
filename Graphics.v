@@ -20,25 +20,31 @@ module topControl(
 	reg [8:0] xoffsetset;
 	reg [7:0] yoffsetset;
 	reg [23:0] delayCnt;
+	reg [23:0] curDelay;
 	
 	initial begin
 		xoffsetset <= 9'd160;
 		yoffsetset <= 8'd120;
 		delayCnt <= DELAY;
+		curDelay <= DELAY;
 	end
 	
 	// move the sprite from right to left
 	always@(posedge CLOCK_50) begin
 		yoffsetset <= 8'd120;
 		if(delayCnt == 0) begin
-			if(xoffsetset == 0)
+			if(xoffsetset == 0) begin
 				xoffsetset <= 9'd160;
+				curDelay <= curDelay - 500000; // object will speed up every time it moves off the screen
+			end
 			else
 				xoffsetset <= xoffsetset - 1;
-			delayCnt <= DELAY;
+			delayCnt <= curDelay;
 		end
 		else
 			delayCnt <= delayCnt - 1;
+		if(curDelay == 0) 
+			curDelay <= DELAY;
 	end
 	
 	Graphics u0(
