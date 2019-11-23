@@ -1,78 +1,3 @@
-
-module topControl(
-		input CLOCK_50,
-		input [3:0] KEY, 
-		input [9:0] SW,
-		output [9:0] LEDR, 
-		output VGA_CLK, 
-		output VGA_HS,
-		output VGA_VS, 
-		output VGA_BLANK_N, 
-		output VGA_SYNC_N, 
-		output [7:0] VGA_R, 
-		output [7:0] VGA_G, 
-		output [7:0] VGA_B
-		);
-		
-		
-	localparam DELAY = 5000000;
-		
-	reg [8:0] xoffsetset;
-	reg [7:0] yoffsetset;
-	reg [23:0] delayCnt;
-	reg [23:0] curDelay;
-	
-	initial begin
-		xoffsetset <= 9'd160;
-		yoffsetset <= 8'd120;
-		delayCnt <= DELAY;
-		curDelay <= DELAY;
-	end
-	
-	// move the sprite from right to left
-	always@(posedge CLOCK_50) begin
-		yoffsetset <= 8'd120;
-		if(delayCnt == 0) begin
-			if(xoffsetset == 0) begin
-				xoffsetset <= 9'd160;
-				curDelay <= curDelay - 500000; // object will speed up every time it moves off the screen
-			end
-			else
-				xoffsetset <= xoffsetset - 1;
-			delayCnt <= curDelay;
-		end
-		else
-			delayCnt <= delayCnt - 1;
-		if(curDelay == 0) 
-			curDelay <= DELAY;
-	end
-	
-	Graphics u0(
-					.CLOCK_50(CLOCK_50),
-					.xoffsetset(xoffsetset),
-					.yoffsetset(yoffsetset),
-					.KEY(KEY[2:0]),
-					.VGA_CLK(VGA_CLK),
-					.VGA_HS(VGA_HS),
-					.VGA_VS(VGA_VS),
-					.VGA_BLANK_N(VGA_BLANK_N),
-					.VGA_SYNC_N(VGA_SYNC_N),
-					.VGA_R(VGA_R),
-					.VGA_B(VGA_B),
-					.VGA_G(VGA_G)
-					);
-					
-	hit_detector u1(
-					.clk(CLOCK_50),
-					.reset_b(~SW[0]), // dummy switch
-					.go(~KEY[3]),
-					.stream(xoffsetset),
-					.hit(LEDR[0])
-					);
-		
-		
-endmodule
-
 module Graphics( 
 		input CLOCK_50,
 		input [8:0] xoffsetset,
@@ -90,43 +15,31 @@ module Graphics(
 
 
 reg  [16:0] address;
-wire [11:0] data;
+wire [11:0] data, dataRED,dataPINK,dataBLUE,dataYELLOW,dataTARGET,dataSONG1,dataSONG2,dataSONG3;
 reg  [11:0] colour;
-reg  [8:0]x;
-reg  [7:0]y;
-reg  [8:0]xmax;
-reg  [7:0]ymax;
-reg  [8:0]xoffset;
-reg  [7:0]yoffset;
+reg  [8:0]x,xmax,xoffset;
+reg  [7:0]y,ymax,yoffset;
 reg  [3:0] todraw, DrawState;
-reg  next, startdraw, donedraw;
+reg  next, startdraw, donedraw, waitfor, draw;
 reg [23:0] delayCnt;
 wire  [7:0] w;
-reg waitfor;
 
 
 ROM256x12TEST u0 (.address(address),.clock(CLOCK_50),.q(data));
+ROM256x12RED u1 (.address(address),.clock(CLOCK_50),.q(dataRED));
+ROM256X12PINK u2 (.address(address),.clock(CLOCK_50),.q(dataPINK));
+ROM256X12BLUE u3 (.address(address),.clock(CLOCK_50),.q(dataBLUE));
+ROM256X12YELLOW u4 (.address(address),.clock(CLOCK_50),.q(dataYELLOW));
+ROM1024X12TARGET u5 (.address(address),.clock(CLOCK_50),.q(dataTARGET));
 
+ROM992X12SONG1 u6 (.address(address),.clock(CLOCK_50),.q(dataSONG1));
+ROM1082x12SONG2 u7 (.address(address),.clock(CLOCK_50),.q(dataSONG2));
+ROM1024X12SONG3 u8 (.address(address),.clock(CLOCK_50),.q(dataSONG3));
 
-localparam BG = 4'b0001, BGwait = 4'b0010, 
-			  Draw1 = 4'b0011 , Draw1wait = 4'b0100, 
-			  Justwait = 4'b1101;
-
-localparam Background = 4'b0001, Item1 = 4'b0010 ;
-	localparam DELAY = 5000000;
-	
-	always@(posedge CLOCK_50) begin
-		if(delayCnt == 0)
-			begin	
-			waitfor<=1;
-			delayCnt <= DELAY;
-			end
-		else
-			begin
-			waitfor<= 0;
-			delayCnt <= delayCnt - 1;
-			end
-	end
+localparam BG = 4'b0001, BGwait = 4'b0010, Draw1 = 4'b0011 , Draw1wait = 4'b0100, Justwait = 4'b1101; // FSM states
+localparam Background = 4'b1000, Test = 4'b1111 ,Hit = 4'b00XX ,Target = 4'b0100, blank = 4'b1100, MENU1=4'b1011 , MENU2 = 4'b1010 ,MENU3 = 4'b1001 ,SONG1 = 4'b0111  ,SONG2 = 4'b0101 ,SONG3 = 4'b0110; // Draw states
+localparam RED = 4'b0010, BLUE = 4'b0011 ,YELLOW = 4'b0001 ,PINK = 4'b0000; // hitboxes
+localparam DELAY = 5000000;// Delay
 
 initial begin
 	address <= 17'd0;
@@ -137,6 +50,21 @@ initial begin
 	x=0;
 	y=0;
 end
+
+always@(posedge CLOCK_50) 
+begin
+	if(delayCnt == 0)
+		begin	
+		waitfor<=1;
+		delayCnt <= DELAY;
+		end
+	else
+		begin
+		waitfor<= 0;
+		delayCnt <= delayCnt - 1;
+		end
+end
+
 
 reg setdraw;
 
@@ -160,7 +88,7 @@ always@(posedge CLOCK_50)
 
 			Draw1: begin
 				setdraw <= 1;
-				todraw = Item1;
+				todraw = Test;
 				startdraw <= 0;
 				if(next == 1)
 					DrawState <= Draw1wait;
@@ -202,13 +130,70 @@ always@(posedge w[1])
 					next <= 1;
 				end
 
-				Item1: begin
+				Test: begin
 					xoffset = xoffsetset;
 					yoffset = yoffsetset;
 					xmax = 9'd15 + xoffset;
 					ymax = 8'd15 + yoffset;
 					next = 1;
 				end
+				Hit: begin
+					xoffset = xoffsetset;
+					yoffset = 8'd112;
+					xmax = 9'd15 + xoffset;
+					ymax = 8'd15 + yoffset;
+					next = 1;
+				end
+				Target: begin
+					xoffset = 8'd64;
+					yoffset = 8'd104;
+					xmax = 9'd31 + xoffset;
+					ymax = 8'd31 + yoffset;
+					next = 1;
+				end
+				MENU1: begin
+					xoffset = xoffsetset;
+					yoffset = yoffsetset;
+					xmax = 9'd95 + xoffset;
+					ymax = 8'd31 + yoffset;
+					next = 1;
+				end
+				MENU2: begin
+					xoffset = xoffsetset;
+					yoffset = yoffsetset;
+					xmax = 9'd95 + xoffset;
+					ymax = 8'd31 + yoffset;
+					next = 1;
+				end
+				MENU3: begin
+					xoffset = xoffsetset;
+					yoffset = yoffsetset;
+					xmax = 9'd95 + xoffset;
+					ymax = 8'd31 + yoffset;
+					next = 1;
+				end
+				SONG1: begin
+					xoffset = xoffsetset;
+					yoffset = yoffsetset;
+					xmax = 9'd61 + xoffset;
+					ymax = 8'd15 + yoffset;
+					next = 1;
+				end
+				SONG2: begin
+					xoffset = xoffsetset;
+					yoffset = yoffsetset;
+					xmax = 9'd62 + xoffset;
+					ymax = 8'd15 + yoffset;
+					next = 1;
+				end
+				SONG3: begin
+					xoffset = xoffsetset;
+					yoffset = yoffsetset;
+					xmax = 9'd63 + xoffset;
+					ymax = 8'd15 + yoffset;
+					next = 1;
+				end
+				
 			endcase
 		end
 end
@@ -249,6 +234,7 @@ always@(posedge w[0])
 					x <= x + 1;
 					y <= y + 0;
 				end
+				
 			end
 		endcase
 	end
@@ -258,18 +244,63 @@ end
 
 always@(*)
 	begin: dataset
+	draw <= 1;
 		case(todraw)
 			Background: begin
 				colour <= 12'b100010000100;
 			end
 
-			Item1: begin
+			Test: 
 				colour <= data;
+			RED: 
+			begin
+				if(dataRED == 12'd4095)
+					draw <=0;
+				colour <= dataRED;
 			end
+			BLUE: 
+			begin
+				if(dataBLUE == 12'd4095)
+					draw <=0;
+				colour <= dataBLUE;
+			end
+			PINK: 
+			begin
+				if(dataPINK == 12'd4095)
+					draw <=0;
+				colour <= dataPINK;
+			end
+			YELLOW: 
+			begin
+				if(dataYELLOW == 12'd4095)
+					draw <=0;
+				colour <= dataYELLOW;
+			end
+			Target: 
+			begin
+				if(dataTARGET == 12'd273)
+					draw <=0;
+				colour <= dataTARGET;
+			end
+			MENU1: 
+				colour <= 12'b000011111111;
+			MENU2: 
+				colour <= 12'b111111110000;
+			MENU3: 
+				colour <= 12'b000011110000;
+			SONG1: 
+				colour <= dataSONG1;
+			SONG2: 
+				colour <= dataSONG2;
+			SONG3: 
+				colour <= dataSONG2;
+			default:
+			draw <= 0;
+			draw <= 12'b111111111111;
 		endcase
 end
 
-vga_adapter VGA0 (.resetn(KEY[0]),.clock(CLOCK_50),.colour(colour),.x(x),.y(y),.plot(KEY[2]),.VGA_R(VGA_R),.VGA_G(VGA_G),.VGA_B(VGA_B),.VGA_HS(VGA_HS),.VGA_VS(VGA_VS),.VGA_BLANK(VGA_BLANK_N),.VGA_SYNC(VGA_SYNC_N),	.VGA_CLK(VGA_CLK));
+vga_adapter VGA0 (.resetn(KEY[0]),.clock(CLOCK_50),.colour(colour),.x(x),.y(y),.plot(draw),.VGA_R(VGA_R),.VGA_G(VGA_G),.VGA_B(VGA_B),.VGA_HS(VGA_HS),.VGA_VS(VGA_VS),.VGA_BLANK(VGA_BLANK_N),.VGA_SYNC(VGA_SYNC_N),	.VGA_CLK(VGA_CLK));
 
 defparam VGA0.RESOLUTION = "320x240";
 defparam VGA0.MONOCHROME = "FALSE";
