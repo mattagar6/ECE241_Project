@@ -3,6 +3,7 @@ module Graphics(
 		input [8:0] xoffsetset,
 		input [7:0] yoffsetset,
 		input [3:0] KEY,
+		input [7:0] score, // used to draw the digits
 		output VGA_CLK, 
 		output VGA_HS,
 		output VGA_VS, 
@@ -15,15 +16,24 @@ module Graphics(
 
 
 reg  [16:0] address;
-wire [11:0] data, dataRED,dataPINK,dataBLUE,dataYELLOW,dataTARGET,dataSONG1,dataSONG2,dataSONG3;
+wire [11:0] data, dataRED,dataPINK,dataBLUE,dataYELLOW,dataTARGET,dataSONG1,dataSONG2,dataSONG3,
+			dataH0, dataH1, dataH2, dataH3, dataH4, dataH5, dataH6, dataH7, dataH8, dataH9, dataHA, dataHB, dataHC, dataHD, dataHE, dataHF;
 reg  [11:0] colour;
 reg  [8:0]x,xmax,xoffset;
 reg  [7:0]y,ymax,yoffset;
-reg  [3:0] todraw, DrawState;
+reg  [4:0] todraw, DrawState;
 reg  next, startdraw, donedraw, waitfor, draw;
 reg [23:0] delayCnt;
 wire  [7:0] w;
 
+
+/*
+
+	add 16 more rom modules for .png files corresponding each of the hex digits
+	
+	FSM assumes each name for the hex digits is "dataHx", where x is 0, 1, 2, 3...
+
+*/
 
 ROM256x12TEST u0 (.address(address),.clock(CLOCK_50),.q(data));
 ROM256x12RED u1 (.address(address),.clock(CLOCK_50),.q(dataRED));
@@ -36,10 +46,14 @@ ROM992X12SONG1 u6 (.address(address),.clock(CLOCK_50),.q(dataSONG1));
 ROM1082x12SONG2 u7 (.address(address),.clock(CLOCK_50),.q(dataSONG2));
 ROM1024X12SONG3 u8 (.address(address),.clock(CLOCK_50),.q(dataSONG3));
 
-localparam BG = 4'b0001, BGwait = 4'b0010, Draw1 = 4'b0011 , Draw1wait = 4'b0100, Justwait = 4'b1101; // FSM states
-localparam Background = 4'b1000, Test = 4'b1111 ,Hit = 4'b00XX ,Target = 4'b0100, blank = 4'b1100, MENU1=4'b1011 , MENU2 = 4'b1010 ,MENU3 = 4'b1001 ,SONG1 = 4'b0111  ,SONG2 = 4'b0101 ,SONG3 = 4'b0110; // Draw states
-localparam RED = 4'b0010, BLUE = 4'b0011 ,YELLOW = 4'b0001 ,PINK = 4'b0000; // hitboxes
+localparam BG = 5'b00001, BGwait = 5'b00010, Draw1 = 5'b00011 , Draw1wait = 5'b00100, Justwait = 5'b01101; // FSM states
+localparam Background = 5'b01000, Test = 5'b01111 ,Hit = 5'b000XX ,Target = 5'b00100, blank = 5'b01100, MENU1=5'b01011 , MENU2 = 5'b01010 ,MENU3 = 5'b01001 ,SONG1 = 5'b00111  ,SONG2 = 5'b00101 ,SONG3 = 5'b00110, DIGIT0 = 5'b10000, DIGIT1 = 5'b10001; // Draw states
+localparam RED = 5'b00010, BLUE = 5'b00011 ,YELLOW = 5'b00001 ,PINK = 5'b00000; // hitboxes
 localparam DELAY = 5000000;// Delay
+
+// hex digits
+localparam H0 = 5'b10000, H1 = 5'b10001, H2 = 5'b10010, H3 = 5'b10011, H4 = 5'b10100, H5 = 5'b10101, H6 = 5'b10110, H7 = 5'b10111, 
+		   H8 = 5'b11000, H9 = 5'b11001, HA = 5'b11010, HB = 5'b11011, HC = 5'b11100, HD = 5'b11101, HE = 5'b11110, HF = 5'b11111;
 
 initial begin
 	address <= 17'd0;
@@ -166,6 +180,7 @@ always@(posedge w[1])
 					next = 1;
 				end
 				MENU3: begin
+				MENU3: begin
 					xoffset = xoffsetset;
 					yoffset = yoffsetset;
 					xmax = 9'd95 + xoffset;
@@ -191,6 +206,20 @@ always@(posedge w[1])
 					yoffset = yoffsetset;
 					xmax = 9'd63 + xoffset;
 					ymax = 8'd15 + yoffset;
+					next = 1;
+				end
+				DIGIT0: begin
+					xoffset = xoffsetset;
+					yoffset = yoffsetset;
+					xmax = /* something */ + xoffset;
+					ymax = /* something */ + yoffset;
+					next = 1;
+				end
+				DIGIT1: begin
+					xoffset = xoffsetset;
+					yoffset = yoffsetset;
+					xmax = /* something */ + xoffset;
+					ymax = /* something */ + yoffset;
 					next = 1;
 				end
 				
@@ -294,6 +323,46 @@ always@(*)
 				colour <= dataSONG2;
 			SONG3: 
 				colour <= dataSONG2;
+			DIGIT0: begin
+				case({1'b1, score[3:0]}) // I hope this works
+					H0: colour <= dataH0;
+					H1: colour <= dataH1;
+					H2: colour <= dataH2;
+					H3: colour <= dataH3;
+					H4: colour <= dataH4;
+					H5: colour <= dataH5;
+					H6: colour <= dataH6;
+					H7: colour <= dataH7;
+					H8: colour <= dataH8;
+					H9: colour <= dataH9;
+					HA: colour <= dataHA;
+					HB: colour <= dataHB;
+					HC: colour <= dataHC;
+					HD: colour <= dataHD;
+					HE: colour <= dataHE;
+					HF: colour <= dataHF;
+				endcase
+			end
+			DIGIT1: begin
+				case({1'b1, score[7:4]})
+					H0: colour <= dataH0;
+					H1: colour <= dataH1;
+					H2: colour <= dataH2;
+					H3: colour <= dataH3;
+					H4: colour <= dataH4;
+					H5: colour <= dataH5;
+					H6: colour <= dataH6;
+					H7: colour <= dataH7;
+					H8: colour <= dataH8;
+					H9: colour <= dataH9;
+					HA: colour <= dataHA;
+					HB: colour <= dataHB;
+					HC: colour <= dataHC;
+					HD: colour <= dataHD;
+					HE: colour <= dataHE;
+					HF: colour <= dataHF;
+				endcase
+			end
 			default:
 			draw <= 0;
 			draw <= 12'b111111111111;
