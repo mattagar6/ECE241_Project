@@ -3,7 +3,6 @@ module topControl(
 		input [3:0] KEY, 
 		input [9:0] SW,
 		output [9:0] LEDR, 
-		output [6:0] HEX0,
 		output VGA_CLK, 
 		output VGA_HS,
 		output VGA_VS, 
@@ -21,7 +20,7 @@ module topControl(
 	reg [7:0] yoffsetset;
 	reg [23:0] delayCnt;
 	reg [23:0] curDelay;
-	reg [3:0] score;
+	reg [7:0] score;
 	wire hit;
 	
 	initial begin
@@ -56,6 +55,7 @@ module topControl(
 					.CLOCK_50(CLOCK_50),
 					.xoffsetset(xoffsetset),
 					.yoffsetset(yoffsetset),
+					.score(score),
 					.KEY(KEY[2:0]),
 					.VGA_CLK(VGA_CLK),
 					.VGA_HS(VGA_HS),
@@ -74,10 +74,5 @@ module topControl(
 					.stream(xoffsetset),
 					.hit(hit)
 					);
-	
-	// temporary, will hook up to VGA later
-	hex_decoder u2(.hex_digit(score), 
-		       .segments(HEX0)
-		      );
 	
 endmodule
