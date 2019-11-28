@@ -1,8 +1,9 @@
-module screenlogic(CLOCK_50,KEY,background,ob1a,ob1axy,ob2a,ob2axy,ob3a,ob3axy,ob1b,ob1bxy,ob2b,ob2bxy,ob3b,ob3bxy,start,Screen);
+module screenlogic(CLOCK_50,KEY,background, gameover, ob1a,ob1axy,ob2a,ob2axy,ob3a,ob3axy,ob1b,ob1bxy,ob2b,ob2bxy,ob3b,ob3bxy,start,Screen);
 
 
 input [3:0] KEY;
 input CLOCK_50;
+input gameover;
 
 reg [1:0] screen, menuscreen, menunext;
 reg [11:0] setbackground;
@@ -13,7 +14,7 @@ output start;
 output [1:0] Screen;
 reg [9:0] ob1s, ob2s, ob3s;
 
-reg startgame,gameover,menu;
+reg startgame, menu;
 
 wire [3:0] w;
 
@@ -26,7 +27,6 @@ assign start = startgame;
 assign Screen = screen;
 
 initial begin
-gameover <= 0;
 startgame<=0;
 screen <= 2'b00;
 menuscreen <= 2'b11;
@@ -54,7 +54,7 @@ always@(posedge CLOCK_50)
 				menu <=0;
 				setbackground <= 12'b000001110000;
 				if(gameover)
-				screen <= 2'b01;
+					screen <= 2'b01;
 				end
 			default: screen <= 2'b00;
 		endcase
@@ -117,12 +117,12 @@ begin
 			menunext<=2'b11;
 	endcase
 end
-assign ob1axy = 17'b01000000001000000;
-assign ob2axy = 17'b00100000000100000;
-assign ob3axy = 17'b00100000001100000;
-assign ob1bxy = 17'b01000000001000000;
-assign ob2bxy = 17'b00100000000100000;
-assign ob3bxy = 17'b00100000001100000;
+assign ob1axy = 17'b01101000001110000;
+assign ob2axy = 17'b01101000000001000;
+assign ob3axy = 17'b01101000011011000;
+assign ob1bxy = 17'b01110000010010000;
+assign ob2bxy = 17'b01110000000101000;
+assign ob3bxy = 17'b01110000011111000;
 assign ob1a = ob1s[4:0];
 assign ob1b = ob1s[9:5];
 assign ob2a = ob2s[4:0];
