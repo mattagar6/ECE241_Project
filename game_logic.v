@@ -114,7 +114,7 @@ module playlogic(CLOCK_50,start,xoffset, drawstream, hit,scoreout, streamout, HE
 			delayCnt <= delayCnt - 1;
 		if(curDelay == 0) 
 			curDelay <= DELAY;
-		done <= stream == 0; // signal to the end of the game
+		done <= stream == 0 && start == 0; // signal to the end of the game
 	end
 	
 	//streamlogic
