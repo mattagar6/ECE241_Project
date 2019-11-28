@@ -49,7 +49,7 @@ ROM1024x12SONG3 u8 (.address(address),.clock(CLOCK_50),.q(dataSONG3));
 localparam BG = 5'b00001, BGwait = 5'b00010, Draw1 = 5'b00011 , Draw1wait = 5'b00100, Draw2 = 5'b00101 , Draw2wait = 5'b00110, Draw3 = 5'b00111 , Draw3wait = 5'b01000, Draw4 = 5'b01001 , Draw4wait = 5'b01010, Draw5 = 5'b01011 , Draw5wait = 5'b01100, Draw6 = 5'b01101 , Draw6wait = 5'b01110, Justwait = 5'b01111; // FSM states
 localparam Background = 5'b01000, Test = 5'b01111 ,Hit = 5'b000XX ,Target = 5'b00100, blank = 5'b01100, MENU1=5'b01011 , MENU2 = 5'b01010 ,MENU3 = 5'b01001 ,SONG1 = 5'b00111  ,SONG2 = 5'b00101 ,SONG3 = 5'b00110, DIGIT0 = 5'b10000, DIGIT1 = 5'b10001; // Draw states
 localparam RED = 5'b00010, BLUE = 5'b00011 ,YELLOW = 5'b00001 ,PINK = 5'b00000; // hitboxes
-localparam DELAY = 5000000;// Delay
+localparam DELAY = 1000000;// Delay, change for higher frame rate
 
 // hex digits
 localparam H0 = 5'b10000, H1 = 5'b10001, H2 = 5'b10010, H3 = 5'b10011, H4 = 5'b10100, H5 = 5'b10101, H6 = 5'b10110, H7 = 5'b10111, 
@@ -345,11 +345,8 @@ always@(posedge w[1])
 		end
 end
 
-wire newclock;
-divider2 u9 (.ck(CLOCK_50),.ckout(newclock),.Clear_b(1'b1));
-
 or (w[3],startdraw,donedraw);
-and(w[0],w[3],newclock);
+and(w[0],w[3], CLOCK_50);
 
 
 always@(posedge w[0])
@@ -497,36 +494,5 @@ defparam VGA0.RESOLUTION = "320x240";
 defparam VGA0.MONOCHROME = "FALSE";
 defparam VGA0.BITS_PER_COLOUR_CHANNEL = 4;
 defparam VGA0.BACKGROUND_IMAGE = "black.mif";
-
-endmodule
-
-module divider2 (ck,ckout,Clear_b);
-input ck;
-input Clear_b;
-output ckout;
-reg [25:0] q;
-reg clockout;
-
-initial begin
-clockout =0;
-q=0;
-end						
-					
-always @(posedge ck) 	
-begin
-if (clockout == 1)
-clockout = 0;
-
-if (q == 2'b01)
-begin
-q <= 0;
-clockout = 1;
-end
-else if (Clear_b == 1'b0)
-q<=0;
-else
-q <= q+1;
-end
-assign ckout = clockout;
 
 endmodule
