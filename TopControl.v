@@ -3,6 +3,7 @@ module topControl(
 		input [3:0] KEY, 
 		input [9:0] SW,
 		output [9:0] LEDR, 
+		output [6:0] HEX0,
 		output VGA_CLK, 
 		output VGA_HS,
 		output VGA_VS, 
@@ -57,11 +58,14 @@ assign LEDR = stream[19:10];
 					.clk(CLOCK_50),
 					.reset_b(~SW[0]), // dummy switch
 					.go(w[2]),
-					.stream(disttohit),
-					.hit(hit)
+					.stream(xoffset),
+					.target(stream[1:0]),
+					.hit(hit),
+					.KEY(KEY),
 					);
 					
-screenlogic u2 (
+					
+	screenlogic u2 (
 				.CLOCK_50(CLOCK_50),
 				.KEY(KEY),
 				.background(background),
@@ -80,24 +84,16 @@ screenlogic u2 (
 				.start(start),
 				.Screen(screen));
 				
-playlogic u3 (
+	playlogic u3 (
 				.CLOCK_50(CLOCK_50),
 				.start(start),
 				.xoffset(xoffset),
 				.drawstream(drawstream),
 				.hit(hit),
 				.scoreout(score),
-				.streamout(stream));
+				.streamout(stream),
+				.HEX0(HEX0));
 				
-				
-//forhitdetector
-always@(*)
-begin
-if(stream[1:0] != 2'b00)
-disttohit <= 9'b111111111;
-else 
-disttohit <= xoffset;
-end
 
 //Assign draw1-6		
 always@(*)

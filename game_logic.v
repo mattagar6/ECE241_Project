@@ -20,7 +20,7 @@ module hit_detector(
     output reg hit // signal to animation modules if the user has successfully hit the bongo
 	);
 
-   localparam CLICK_WAIT = 0, CLICK = 1, EPS = 10;
+   localparam CLICK_WAIT = 0, CLICK = 1, EPS = 36;
    reg [3:0] cur_s, next_s;
 	reg correct;
    
@@ -29,9 +29,9 @@ module hit_detector(
 	correct <=0;
 	case(target)
 	2'b00:;
-	2'b01:if(KEY[1]) correct <=1;
-	2'b10:if(KEY[2]) correct <=1;
-	2'b11:if(KEY[0]) correct <=1;
+	2'b01:if(~KEY[1]) correct <=1;
+	2'b10:if(~KEY[2]) correct <=1;
+	2'b11:if(~KEY[0]) correct <=1;
 	default:;
 	endcase
 	end
@@ -53,8 +53,7 @@ module hit_detector(
 		else if(cur_s == CLICK) begin
 			//logic to send the correct output signal to "hit", based on position of keys relative to hit marker
 			
-			// if press is within epsilon (EPS) pixels, close enough to be considered a hit
-			if(stream < EPS & correct)
+			if(correct && stream < EPS)
 				hit = 1;
 			
 			cur_s <= next_s;
@@ -65,9 +64,9 @@ module hit_detector(
 
 endmodule
 
-module playlogic(CLOCK_50,start,xoffset, drawstream, hit,scoreout, streamout);
+module playlogic(CLOCK_50,start,xoffset, drawstream, hit,scoreout, streamout, HEX0);
 
-		
+	output [6:0] HEX0;
 	localparam DELAY = 5000000;
 	input CLOCK_50;
 	input start;
@@ -103,7 +102,7 @@ module playlogic(CLOCK_50,start,xoffset, drawstream, hit,scoreout, streamout);
 		if(delayCnt == 0) begin
 			if(xoffsetset == 0) begin
 				xoffsetset <= 9'd48;
-				curDelay <= curDelay - 500000; // object will speed up every time it moves off the screen
+				curDelay <= curDelay - 500000;
 				updateline <= 1;
 			end
 			else
@@ -184,4 +183,32 @@ module playlogic(CLOCK_50,start,xoffset, drawstream, hit,scoreout, streamout);
 	always@(posedge hit)
 		score <= score + 1; // increment score on a hit
 
+	hex_decoder u0(.hex_digit(score[3:0]), .segments(HEX0));
 endmodule
+
+module hex_decoder(hex_digit, segments);
+    input [3:0] hex_digit;
+    output reg [6:0] segments;
+   
+    always @(*)
+        case (hex_digit)
+            4'h0: segments = 7'b100_0000;
+            4'h1: segments = 7'b111_1001;
+            4'h2: segments = 7'b010_0100;
+            4'h3: segments = 7'b011_0000;
+            4'h4: segments = 7'b001_1001;
+            4'h5: segments = 7'b001_0010;
+            4'h6: segments = 7'b000_0010;
+            4'h7: segments = 7'b111_1000;
+            4'h8: segments = 7'b000_0000;
+            4'h9: segments = 7'b001_1000;
+            4'hA: segments = 7'b000_1000;
+            4'hB: segments = 7'b000_0011;
+            4'hC: segments = 7'b100_0110;
+            4'hD: segments = 7'b010_0001;
+            4'hE: segments = 7'b000_0110;
+            4'hF: segments = 7'b000_1110;   
+            default: segments = 7'h7f;
+        endcase
+endmodule
+
