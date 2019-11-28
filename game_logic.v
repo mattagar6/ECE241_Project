@@ -14,8 +14,8 @@ module hit_detector(
     input clk, 
     input reset_b, 
     input go,
-	 input [1:0]target,
-	 input [3:0] KEY,
+    input [1:0]target,
+    input [3:0] KEY,
     input [8:0] stream, // x position of target to hit
     output reg hit // signal to animation modules if the user has successfully hit the bongo
 	);
@@ -64,7 +64,7 @@ module hit_detector(
 
 endmodule
 
-module playlogic(CLOCK_50,start,xoffset, drawstream, hit,scoreout, streamout, HEX0);
+module playlogic(CLOCK_50,start,xoffset, drawstream, hit,scoreout, streamout, HEX0, done);
 
 	output [6:0] HEX0;
 	localparam DELAY = 5000000;
@@ -83,6 +83,7 @@ module playlogic(CLOCK_50,start,xoffset, drawstream, hit,scoreout, streamout, HE
 	input hit;
 	output [7:0]scoreout;
 	output [239:0] streamout;
+	output reg done;
 	reg updateline;
 	
 	initial begin
@@ -113,6 +114,7 @@ module playlogic(CLOCK_50,start,xoffset, drawstream, hit,scoreout, streamout, HE
 			delayCnt <= delayCnt - 1;
 		if(curDelay == 0) 
 			curDelay <= DELAY;
+		done <= stream == 0; // signal to the end of the game
 	end
 	
 	//streamlogic
