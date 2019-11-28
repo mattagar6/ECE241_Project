@@ -353,44 +353,38 @@ and(w[0],w[3],newclock);
 
 
 always@(posedge w[0])
-	
 	begin: imagesetter
-//		x = xoffset;
-//		y = yoffset;
 		if(startdraw == 0)
-			begin
+		begin
 			donedraw <= 0;
-			address <= 0;
+			address = 0;
 			end
-			
 		else begin
 
-			address <= 0;
 			donedraw <= 0;
+			x <= xoffset;
+			y <= yoffset;
 
 		case(x)
 			xmax: begin
 				if (y == ymax) begin
-					donedraw <= donedraw + 1;
-					
+					donedraw <= 1;
+					address <= 0;
 				end
 				else begin
-					x = xoffset;
-					y = y + 1;
+					x <= xoffset;
+					y <= y + 1;
 					address <= address + 1;
 				end
 			end
 
 			default: begin
-				if(address == 0) begin
-					x = xoffset;
-					y = yoffset;
-					address <= address + 1;
-				end
+				if(address == 0) 
+					address = address + 1;
 				else begin
 					address <= address + 1;
-					x = x + 1;
-					y = y + 0;
+					x <= x + 1;
+					y <= y + 0;
 				end
 				
 			end
