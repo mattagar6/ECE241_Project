@@ -28,6 +28,7 @@ reg [8:0]disttohit;
 wire [7:0] score;
 wire [2:0] w;
 wire [11:0] background;
+wire done;
 
 or(w[0],~KEY[0],~KEY[1]);
 or(w[1],~KEY[2],~KEY[3]);
@@ -69,6 +70,7 @@ assign LEDR = stream[19:10];
 				.CLOCK_50(CLOCK_50),
 				.KEY(KEY),
 				.background(background),
+				.gameover(done),
 				.ob1a(menubuttons[4:0]),
 				.ob1axy(menupos[16:0]),
 				.ob2a(menubuttons[14:10]),
@@ -82,7 +84,7 @@ assign LEDR = stream[19:10];
 				.ob3b(menubuttons[29:25]),
 				.ob3bxy(menupos[101:85]),
 				.start(start),
-				.Screen(screen));
+				.Screen(screen),);
 				
 	playlogic u3 (
 				.CLOCK_50(CLOCK_50),
@@ -92,7 +94,8 @@ assign LEDR = stream[19:10];
 				.hit(hit),
 				.scoreout(score),
 				.streamout(stream),
-				.HEX0(HEX0));
+				.HEX0(HEX0),
+			.	done(done));
 				
 
 //Assign draw1-6		
