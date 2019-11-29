@@ -54,7 +54,7 @@ always@(posedge CLOCK_50)
 				menu <=0;
 				setbackground <= 12'b000001110000;
 				if(gameover)
-					screen <= 2'b01;
+					screen <= 2'b00;
 				end
 			default: screen <= 2'b00;
 		endcase

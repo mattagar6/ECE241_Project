@@ -2,8 +2,8 @@ module topControl(
 		input CLOCK_50,
 		input [3:0] KEY, 
 		input [9:0] SW,
-		output [9:0] LEDR, 
 		output [6:0] HEX0,
+		output [6:0] HEX1,
 		output VGA_CLK, 
 		output VGA_HS,
 		output VGA_VS, 
@@ -33,8 +33,6 @@ wire done;
 or(w[0],~KEY[0],~KEY[1]);
 or(w[1],~KEY[2],~KEY[3]);
 or(w[2],w[1],w[0]);
-
-assign LEDR = stream[19:10];
 
 
 
@@ -95,7 +93,8 @@ assign LEDR = stream[19:10];
 				.scoreout(score),
 				.streamout(stream),
 				.HEX0(HEX0),
-			.	done(done));
+				.HEX1(HEX1),
+				.done(done));
 				
 
 //Assign draw1-6		
