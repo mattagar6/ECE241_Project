@@ -64,10 +64,10 @@ module hit_detector(
 
 endmodule
 
-module playlogic(CLOCK_50,start,xoffset, drawstream, hit,scoreout, streamout, HEX0, done);
+module playlogic(CLOCK_50,start,xoffset, drawstream, hit,scoreout, streamout, HEX0, HEX1, done);
 
-	output [6:0] HEX0;
-	localparam DELAY = 5000000;
+	output [6:0] HEX0, HEX1;
+	localparam DELAY = 2000000;
 	input CLOCK_50;
 	input start;
 	output [8:0] xoffset;
@@ -99,12 +99,22 @@ module playlogic(CLOCK_50,start,xoffset, drawstream, hit,scoreout, streamout, HE
 	// move the sprite from right to left
 	always@(posedge CLOCK_50) 
 	begin
+	done <=0;
+		if(start)
+		begin
+		curDelay <= DELAY;
+		delayCnt <= DELAY;
+		xoffsetset <= 9'd48;
+		end
+		else
+		begin
 		updateline <= 0;
 		if(delayCnt == 0) begin
 			if(xoffsetset == 0) begin
 				xoffsetset <= 9'd48;
-				curDelay <= curDelay - 500000;
+				curDelay <= curDelay - 14000;
 				updateline <= 1;
+				done <= stream == 0 && start == 0; // signal to the end of the game
 			end
 			else
 				xoffsetset <= xoffsetset - 1;
@@ -114,7 +124,8 @@ module playlogic(CLOCK_50,start,xoffset, drawstream, hit,scoreout, streamout, HE
 			delayCnt <= delayCnt - 1;
 		if(curDelay == 0) 
 			curDelay <= DELAY;
-		done <= stream == 0 && start == 0; // signal to the end of the game
+		
+		end
 	end
 	
 	//streamlogic
@@ -182,10 +193,16 @@ module playlogic(CLOCK_50,start,xoffset, drawstream, hit,scoreout, streamout, HE
 	assign drawstream = setstream;
 
 	
-	always@(posedge hit)
+	always@(posedge CLOCK_50)
+	begin
+		if(hit)
 		score <= score + 1; // increment score on a hit
+		if(start)
+		score <= 0;
+	end
 
 	hex_decoder u0(.hex_digit(score[3:0]), .segments(HEX0));
+	hex_decoder u1(.hex_digit(score[7:4]), .segments(HEX1));
 endmodule
 
 module hex_decoder(hex_digit, segments);
